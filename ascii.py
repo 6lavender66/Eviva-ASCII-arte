@@ -1,64 +1,92 @@
-import math # kocham matme
-
 # biblioteka pillow do generalnego działania na zdjęciach
 from PIL import Image, ImageDraw, ImageFont
+import math # kocham matme
 
-# lista tych znaków jest ułożona od "najbardziej kryjących" po te najmniej kryjące 
-chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "[::-1] 
-# chars = "#Wo- "[::-1] # testowanie, też działa
+# no więc tutaj wszystko znaduje się w klasie żeby w przyszłości była możliwość podzielić program na moduły
 
-charArray = list(chars) # tworzymy liste tych znaków
-charLength = len(charArray) # pobieramy jego długośc 
-interval = charLength/256 # i bam mamy interwał 
+class AsciiArtGenerator:
 
-scaleFactor = 0.15 # generalnie to jeden znak jeden pixel to dość DUŻY format, także musimy ograniczyć skalowanie, próbowałem z wartościami poniżej 1, przy mocniejszym kompie można spróbować co nam da wartość 100 xD
-
-# tutaj też mała poprawka, jeden pixel nie ma takich samych wymiarów co jeden znak, także tutaj to uściśliłem
-oneCharWidth = 10
-oneCharHeight = 18
-
-def getChar(inputInt): # więc wartości pikseli są zapisywane w przedziale od 0 do 255
-    return charArray[math.floor(inputInt*interval)] # pixel jako input, mnożony jest z interwałem (w tym kontkeście zakres jednego znaku) następnie zwracana jest wartość zaokrąglona w dół które powinny być używanie na podstawie wartości pixela 
-
-# krótka matma: Jeśli inputInt wynosi 128, a interwał wynosi 2, to funkcja math.floor(128 * 2) da wynik 256. Zatem jeśli charArray ma długość 256, to charArray[256] będzie wybierane jako odpowiedni znak dla piksela o wartości 128.
-
-text_file = open("Output.txt", "w") # otwieramy plik gdzie 
-
-im = Image.open("content/bagsik.jpg") # otwarcie pliku na którym będziemy operować 
-
-#fnt = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 15) # implikuje tutaj możliwość zmiany czcionek, oby sie GNOME na pysk nie wywalił
-fnt = ImageFont.load_default()  # Domyślna czcionka 
-
-
-width, height = im.size # pobieranie szerokości i wysokości zdjęcia
-im = im.resize((int(scaleFactor*width), int(scaleFactor*height*(oneCharWidth/oneCharHeight))), Image.NEAREST) # więc tak, przeskaluemy zdjęcie przez Skale oraz dla wysokości mnożmy przez iloraz szerokosci i długości jednego znaku, dlaczego pisałem wyżej
-width, height = im.size # pobieranie szerokości i wysokości zdjęcia jeszcze raz, tym razem przeskalowanego
-pix = im.load() # załadowanie zdjęcia
-
-outputImage = Image.new('RGB', (oneCharWidth * width, oneCharHeight * height), color = (0, 0, 0)) # no tutaj tworzymy obraz na którym są znaki, w kolorze wygląda bardziej spektakularnie
-d = ImageDraw.Draw(outputImage) 
-
-###
-### Tutaj działay całą magie
-### 
-
-for i in range(height):
-    for j in range(width): # kolejno iteratacja przez każdy pixel
-        r, g, b = pix[j, i] # pobieramy wartości kolorów w formacie RGB
+    def __init__(self, char_set, scale_factor, one_char_width, one_char_height, font_path, font_size):
+        self.char_array = list(char_set[::-1]) # tworzymy liste tych znaków (przeniosłem tutaj również iterowanie od końca)
+        self.char_length = len(self.char_array) # pobieramy jego długośc 
+        self.interval = self.char_length / 256 # i bam mamy interwał 
+        self.scale_factor = scale_factor
+        self.one_char_width = one_char_width
+        self.one_char_height = one_char_height
         
-        #polecam tutaj zaznaczyć zawijanie wierszy
-        # tutaj zatrzymajmy sie na chwile, natężenie/pokrycie znaku mówi co dokładnie zobaczymy, tak więc musimy przerobić zdjęcie na czarnobiałe 
+        # obsługa błędu czcionki, powinna wczytać wtedy systemową 
+        try:
+            self.font = ImageFont.truetype(font_path, font_size)
+        except IOError:
+            print("Error: Nie ma takiej czcionki")
+            self.font = ImageFont.load_default()
+
+    def get_char(self, input_int): # więc wartości pikseli są zapisywane w przedziale od 0 do 255
+        return self.char_array[math.floor(input_int * self.interval)] # pixel jako input, mnożony jest z interwałem (w tym kontkeście zakres jednego znaku) następnie zwracana jest wartość zaokrąglona w dół które powinny być używanie na podstawie wartości pixela 
+
+
+    def generate_ascii_art(self, image_path, output_path):
+        im = Image.open(image_path) # otwarcie pliku na którym będziemy operować 
+        width, height = im.size # pobieranie szerokości i wysokości zdjęcia
+        im = im.resize(
+            (
+                
+                int(self.scale_factor * width), 
+                int(self.scale_factor * height * (self.one_char_width / self.one_char_height))
+                
+            ),
+            Image.NEAREST
         
-        h = int(r/3 + g/3 + b/3) # efekt otrzymuje tutaj przez wyciągnięciu średniej 
- 
-        pix[j, i] = (h, h, h) # teraz zastępujemy pixel kolorem szarym
+        ) # więc tak, przeskaluemy zdjęcie przez Skale oraz dla wysokości mnożmy przez iloraz szerokosci i długości jednego znaku, dlaczego wyjaśnione jest w main
+        width, height = im.size # pobieranie szerokości i wysokości zdjęcia jeszcze raz, tym razem przeskalowanego
+        pix = im.load() # załadowanie zdjęcia
 
-        text_file.write(getChar(h)) # teraz każdy pixel zapisujemy do danego znaku
-        d.text((j*oneCharWidth, i*oneCharHeight), getChar(h), font = fnt, fill = (r, g, b)) # tutaj rysujemy na obrazku, najporściej mówiąc 
+        output_image = Image.new('RGB', (self.one_char_width * width, self.one_char_height * height), color=(0, 0, 0)) # no tutaj tworzymy obraz na którym są znaki, w kolorze wygląda bardziej spektakularnie
+        draw = ImageDraw.Draw(output_image) 
 
-    text_file.write('\n') # nowa linia co każdy wiersz
+        with open(output_path, 'w') as text_file:
+            for i in range(height):
+                for j in range(width): # kolejno iteratacja przez każdy pixel
+                    r, g, b = pix[j, i] # pobieramy wartości kolorów w formacie RGB
 
-outputImage.save('output.png') # zapisanie ciągów znaków jako zdjęcie, całkiem cool, taka znakocepcja
+                    # tutaj zatrzymajmy sie na chwile, natężenie/pokrycie znaku mówi co dokładnie zobaczymy, tak więc musimy przerobić zdjęcie na czarnobiałe 
+        
+                    h = int(r/3 + g/3 + b/3) # efekt otrzymuje tutaj przez wyciągnięciu średniej 
+
+                    pix[j, i] = (h, h, h) # teraz zastępujemy pixel kolorem szarym
+
+                    text_file.write(self.get_char(h)) # teraz każdy pixel zapisujemy do danego znaku
+                    draw.text((
+
+                                j * self.one_char_width, 
+                                i * self.one_char_height), 
+                                self.get_char(h), 
+                                font=self.font,
+                                fill=(r, g, b)) # tutaj rysujemy na obrazku, najporściej mówiąc
+
+                text_file.write('\n') # nowa linia co każdy wiersz
+
+        output_image.save('output.png') # zapisanie ciągów znaków jako zdjęcie, całkiem cool, taka znakocepcja
+
+# przeniesie wszystkich ważnych zmiennych do maina, ułatwia zmienianie kluczowych parametrów 
+def main():
+    char_set = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
+    scale_factor = 0.09
+    one_char_width = 10
+    one_char_height = 18
+    font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+    font_size = 15
+    image_path = "content/car.jpg"
+    output_path = "Output.txt"
+
+
+    # wywołanie funkcji 
+    ascii_generator = AsciiArtGenerator(char_set, scale_factor, one_char_width, one_char_height, font_path, font_size)
+    ascii_generator.generate_ascii_art(image_path, output_path)
+
+# wywołanie programu
+if __name__ == "__main__":
+    main()
 
 
 
