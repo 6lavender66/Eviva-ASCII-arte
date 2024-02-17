@@ -1,0 +1,6 @@
+# Ignorowanie outputu programu
+output.png
+Output.txt
+
+# Ignorowanie folderu z którego biore zdjęcia 
+/content/
