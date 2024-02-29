@@ -1,88 +1,18 @@
-# biblioteka pillow do generalnego działania na zdjęciach
-from PIL import Image, ImageDraw, ImageFont
-import math # kocham matme
+from logic import Logic
+from menu import UX
 
-# no więc tutaj wszystko znaduje się w klasie żeby w przyszłości była możliwość podzielić program na moduły
+# import modułów 
 
-class AsciiArtGenerator:
-
-    def __init__(self, char_set, scale_factor, one_char_width, one_char_height, font_path, font_size):
-        self.char_array = list(char_set[::-1]) # tworzymy liste tych znaków (przeniosłem tutaj również iterowanie od końca)
-        self.char_length = len(self.char_array) # pobieramy jego długośc 
-        self.interval = self.char_length / 256 # i bam mamy interwał 
-        self.scale_factor = scale_factor
-        self.one_char_width = one_char_width
-        self.one_char_height = one_char_height
-        
-        # obsługa błędu czcionki, powinna wczytać wtedy systemową 
-        try:
-            self.font = ImageFont.truetype(font_path, font_size)
-        except IOError:
-            print("Error: Nie ma takiej czcionki")
-            self.font = ImageFont.load_default()
-
-    def get_char(self, input_int): # więc wartości pikseli są zapisywane w przedziale od 0 do 255
-        return self.char_array[math.floor(input_int * self.interval)] # pixel jako input, mnożony jest z interwałem (w tym kontkeście zakres jednego znaku) następnie zwracana jest wartość zaokrąglona w dół które powinny być używanie na podstawie wartości pixela 
-
-
-    def generate_ascii_art(self, image_path, output_path):
-        im = Image.open(image_path) # otwarcie pliku na którym będziemy operować 
-        width, height = im.size # pobieranie szerokości i wysokości zdjęcia
-        im = im.resize(
-            (
-                
-                int(self.scale_factor * width), 
-                int(self.scale_factor * height * (self.one_char_width / self.one_char_height))
-                
-            ),
-            Image.NEAREST
-        
-        ) # więc tak, przeskaluemy zdjęcie przez Skale oraz dla wysokości mnożmy przez iloraz szerokosci i długości jednego znaku, dlaczego wyjaśnione jest w main
-        width, height = im.size # pobieranie szerokości i wysokości zdjęcia jeszcze raz, tym razem przeskalowanego
-        pix = im.load() # załadowanie zdjęcia
-
-        output_image = Image.new('RGB', (self.one_char_width * width, self.one_char_height * height), color=(0, 0, 0)) # no tutaj tworzymy obraz na którym są znaki, w kolorze wygląda bardziej spektakularnie
-        draw = ImageDraw.Draw(output_image) 
-
-        with open(output_path, 'w') as text_file:
-            for i in range(height):
-                for j in range(width): # kolejno iteratacja przez każdy pixel
-                    r, g, b = pix[j, i] # pobieramy wartości kolorów w formacie RGB
-
-                    # tutaj zatrzymajmy sie na chwile, natężenie/pokrycie znaku mówi co dokładnie zobaczymy, tak więc musimy przerobić zdjęcie na czarnobiałe 
-        
-                    h = int(r/3 + g/3 + b/3) # efekt otrzymuje tutaj przez wyciągnięciu średniej 
-
-                    pix[j, i] = (h, h, h) # teraz zastępujemy pixel kolorem szarym
-
-                    text_file.write(self.get_char(h)) # teraz każdy pixel zapisujemy do danego znaku
-                    draw.text((
-
-                                j * self.one_char_width, 
-                                i * self.one_char_height), 
-                                self.get_char(h), 
-                                font=self.font,
-                                fill=(r, g, b)) # tutaj rysujemy na obrazku, najporściej mówiąc
-
-                text_file.write('\n') # nowa linia co każdy wiersz
-
-        output_image.save('output.png') # zapisanie ciągów znaków jako zdjęcie, całkiem cool, taka znakocepcja
-
-# przeniesie wszystkich ważnych zmiennych do maina, ułatwia zmienianie kluczowych parametrów 
 def main():
     char_set = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
-    scale_factor = 0.09
+    scale_factor = 0.5
     one_char_width = 10
     one_char_height = 18
     font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
     font_size = 15
-    image_path = "content/car.jpg"
-    output_path = "Output.txt"
 
-
-    # wywołanie funkcji 
-    ascii_generator = AsciiArtGenerator(char_set, scale_factor, one_char_width, one_char_height, font_path, font_size)
-    ascii_generator.generate_ascii_art(image_path, output_path)
+    menu = UX(char_set, scale_factor, one_char_width, one_char_height, font_path, font_size)
+    menu.root.mainloop()
 
 # wywołanie programu
 if __name__ == "__main__":
