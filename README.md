@@ -16,5 +16,8 @@ Prosty program w Pythonie do generowania sztuki ASCII z obrazów. Konwertuje obr
 5. Po zakończeniu konwersji pojawi się komunikat o sukcesie, a pliki zostaną zapisane.
 
 ## Uwagai 
-- Z racji na nacisk czasowy i tego że dopiero ucze się frameworka tkintera, mogą pojawić się błedy mimo że dodałem obsługe błedu do wszystkie co mi wpadło do głowy.
-- Nie ma wielowątkowości, tzn przez sposób napiania GUI obrazy sie kolejkują zamiast wykonywać naraz.
+- Z racji na nacisk czasowy i tego że dopiero ucze się frameworka tkintera, mogą pojawić się błedy mimo że dodałem obsługę błedów do wszystkiego co mi wpadło do głowy.
+- Nie ma wielowątkowości, tzn. przez sposób napiania GUI obrazy sie kolejkują zamiast wykonywać naraz.
+- Za wygląd makaronowy klasy UX, z góry przeprszam. Inwencja twórcza. 
+
+Niech żyje sztuka. 
