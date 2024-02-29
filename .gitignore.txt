@@ -2,5 +2,6 @@
 output.png
 Output.txt
 
-# Ignorowanie folderu z którego biore zdjęcia 
+# Ignorowanie folderów
 /content/
+/__pycache__/
